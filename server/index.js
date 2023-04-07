@@ -12,7 +12,7 @@ import mysql from "mysql";
 const PORT = process.env.PORT || 5000;
 
 const db = mysql.createConnection({
-  host : '34.142.151.50',
+  socketPath     : '/cloudsql/marine-resource-383006:asia-southeast1:mc02g2center',
   user : 'root',
   password : '',
   connectTimeout: 20000,
