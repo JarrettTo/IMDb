@@ -12,10 +12,10 @@ import mysql from "mysql";
 const PORT = process.env.PORT || 5000;
 
 const db = mysql.createConnection({
-  host : 'localhost',
+  host : '34.142.151.50',
   user : 'root',
-  password : 'flsmdfs30',
-  database : 'mco2'
+  password : '',
+  database : 'node'
 })
 db.connect((err)=>{
   if(err){
