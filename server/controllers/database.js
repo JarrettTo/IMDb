@@ -3,7 +3,7 @@ const db = mysql.createConnection({
     host : '34.142.151.50',
     user : 'root',
     password : '',
-    database : 'node'
+    database : 'Node'
 })
 export const insert = async (req, res) => {
     let post = {movie_id: 1, title: "Fuck", dYear: 1990, genre: "Josh, Quinzon", director: "Eldrich Go", actor1: "Justin To", actor2: "Irah Oliva"};
