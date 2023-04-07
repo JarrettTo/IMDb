@@ -1,0 +1,21 @@
+NAVBAR
+[x] navigate thru the web app
+
+INSERT FEATURE
+[x] insert movie feature
+[x] input validation
+
+SEARCH FEATURE
+[x] search value is acquired
+[x] initally load all movies
+[x] search by movie name
+    [x] with update button for each movie
+[x] no results
+[x] display results
+[] pagination 
+
+UPDATE FEATURE
+[] clicking update leads to update page with the data of the selected movie
+[] update validation 
+
+VIEW REPORT
