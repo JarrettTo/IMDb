@@ -1,12 +1,14 @@
 import mysql from "mysql";
+import dotenv from 'dotenv';
 const db = mysql.createConnection({
-    host : '34.142.151.50',
-    user : 'root',
+    host : process.env.HOST,
+    user : process.env.USER,
     password : '',
-    database : 'Node'
+    database : process.env.DATABASE
 })
 export const insert = async (req, res) => {
-    let post = {movie_id: 1, title: "Fuck", dYear: 1990, genre: "Josh, Quinzon", director: "Eldrich Go", actor1: "Justin To", actor2: "Irah Oliva"};
+    const {movie_id, title, dYear, genre,director, actor1, actor2} = req.body;
+    const post={movie_id, title, dYear, genre, director, actor1,actor2}
     let sql = "INSERT INTO movies SET ?";
     let query = db.query(sql, post, (err,result)=>{
       if(err){
@@ -17,9 +19,9 @@ export const insert = async (req, res) => {
     });
 };
 export const deleteRecord = async (req, res) => {
-    let post = 3;
+
     let sql = "DELETE FROM movies WHERE movie_id = ?";
-    let query = db.query(sql, post, (err,result)=>{
+    let query = db.query(sql, req.params.id, (err,result)=>{
       if(err){
         throw err;
       }
@@ -30,7 +32,8 @@ export const deleteRecord = async (req, res) => {
 
 export const updateRecord = async (req, res) => {
 
-    let post = {movie_id: 1, title: "Duck", dYear: 1990, genre: "Quinzon", director: "Eldrich Go", actor1: "Justin To", actor2: "Irah Oliva"};
+    const {movie_id, title, dYear, genre,director, actor1, actor2} = req.body;
+    const post={movie_id, title, dYear, genre, director, actor1,actor2}
     let sql = `UPDATE movies SET ? WHERE movie_id = ${req.params.id}`;
     let query = db.query(sql, post, (err,result)=>{
       if(err){
@@ -52,9 +55,8 @@ export const viewRecords = async (req, res) => {
     });
 };
 export const viewRecord = async (req, res) => {
-    let num = 4;
     let sql = `SELECT * FROM movies WHERE movies_id = ${req.params.id}`;
-    let query = db.query(sql, num, (err,result)=>{
+    let query = db.query(sql, (err,result)=>{
       if(err){
         throw err;
       }
