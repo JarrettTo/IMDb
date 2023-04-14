@@ -1,13 +1,13 @@
 import mysql from "mysql";
 const db = mysql.createConnection({
-    host : 'localhost',
+    host : '34.142.151.50',
     user : 'root',
-    password : 'flsmdfs30',
-    database : 'mco2'
+    password : '',
+    database : 'Node'
 })
 export const insert = async (req, res) => {
-    let post = {num: 4, name: "Fuck"};
-    let sql = "INSERT INTO new_table SET ?";
+    let post = {movie_id: 1, title: "Fuck", dYear: 1990, genre: "Josh, Quinzon", director: "Eldrich Go", actor1: "Justin To", actor2: "Irah Oliva"};
+    let sql = "INSERT INTO movies SET ?";
     let query = db.query(sql, post, (err,result)=>{
       if(err){
         throw err;
@@ -18,7 +18,7 @@ export const insert = async (req, res) => {
 };
 export const deleteRecord = async (req, res) => {
     let post = 3;
-    let sql = "DELETE FROM new_table WHERE num = ?";
+    let sql = "DELETE FROM movies WHERE movie_id = ?";
     let query = db.query(sql, post, (err,result)=>{
       if(err){
         throw err;
@@ -30,8 +30,8 @@ export const deleteRecord = async (req, res) => {
 
 export const updateRecord = async (req, res) => {
 
-    let post = {num: req.params.id, name: "BITCHASS"}
-    let sql = `UPDATE new_table SET ? WHERE num = ${req.params.id}`;
+    let post = {movie_id: 1, title: "Duck", dYear: 1990, genre: "Quinzon", director: "Eldrich Go", actor1: "Justin To", actor2: "Irah Oliva"};
+    let sql = `UPDATE movies SET ? WHERE movie_id = ${req.params.id}`;
     let query = db.query(sql, post, (err,result)=>{
       if(err){
         throw err;
@@ -42,7 +42,7 @@ export const updateRecord = async (req, res) => {
 };
 
 export const viewRecords = async (req, res) => {
-    let sql = `SELECT * FROM new_table`;
+    let sql = `SELECT * FROM movies`;
     let query = db.query(sql, (err,result)=>{
       if(err){
         throw err;
@@ -53,7 +53,7 @@ export const viewRecords = async (req, res) => {
 };
 export const viewRecord = async (req, res) => {
     let num = 4;
-    let sql = `SELECT * FROM new_table WHERE num = ${req.params.id}`;
+    let sql = `SELECT * FROM movies WHERE movies_id = ${req.params.id}`;
     let query = db.query(sql, num, (err,result)=>{
       if(err){
         throw err;

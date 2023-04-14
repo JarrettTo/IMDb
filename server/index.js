@@ -9,13 +9,14 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import mysql from "mysql";
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 const db = mysql.createConnection({
-  host : 'localhost',
+  host : '34.142.151.50',
   user : 'root',
-  password : 'flsmdfs30',
-  database : 'mco2'
+  password : '',
+  connectTimeout: 20000,
+  database : 'Node'
 })
 db.connect((err)=>{
   if(err){
