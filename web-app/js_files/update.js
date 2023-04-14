@@ -1,7 +1,9 @@
 window.addEventListener('DOMContentLoaded', () => {
 
+    // get html form 
     const form = document.querySelector('form');
 
+    // get selected data from previous search page
     var movieDetails = JSON.parse(localStorage.getItem("movieDetails"));
     console.log(movieDetails);
 
@@ -14,6 +16,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("actor1").value = movieDetails.actor1;
     document.getElementById("actor2").value = movieDetails.actor2;
 
+    // create new data move as update
     form.addEventListener('submit', event => {
         event.preventDefault();
     

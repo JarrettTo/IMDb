@@ -1,8 +1,9 @@
 window.addEventListener('DOMContentLoaded', () => {
 
-    // insert movie 
+    // get the form data
     const form = document.querySelector('form');
 
+    // upon submit, create a movie object with the inputted data
     form.addEventListener('submit', event => {
     event.preventDefault();
 

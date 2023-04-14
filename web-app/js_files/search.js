@@ -1,98 +1,6 @@
-// var movies = [
-//       {
-//         "movie_id": 1,
-//         "title": "The Shawshank Redemption",
-//         "year": 1994,
-//         "genre": "Drama",
-//         "director": "Frank Darabont",
-//         "actor1": "Tim Robbins",
-//         "actor2": "Morgan Freeman"
-//       },
-//       {
-//         "movie_id": 2,
-//         "title": "The Godfather",
-//         "year": 1972,
-//         "genre": "Crime",
-//         "director": "Francis Ford Coppola",
-//         "actor1": "Marlon Brando",
-//         "actor2": "Al Pacino"
-//       },
-//       {
-//         "movie_id": 3,
-//         "title": "The Dark Knight",
-//         "year": 2008,
-//         "genre": "Action",
-//         "director": "Christopher Nolan",
-//         "actor1": "Christian Bale",
-//         "actor2": "Heath Ledger"
-//       },
-//       {
-//         "movie_id": 4,
-//         "title": "Pulp Fiction",
-//         "year": 1994,
-//         "genre": "Crime",
-//         "director": "Quentin Tarantino",
-//         "actor1": "John Travolta",
-//         "actor2": "Samuel L. Jackson"
-//       },
-//       {
-//         "movie_id": 5,
-//         "title": "Forrest Gump",
-//         "year": 1994,
-//         "genre": "Drama",
-//         "director": "Robert Zemeckis",
-//         "actor1": "Tom Hanks",
-//         "actor2": "Robin Wright"
-//       },
-//       {
-//         "movie_id": 6,
-//         "title": "The Matrix",
-//         "year": 1999,
-//         "genre": "Sci-Fi",
-//         "director": "The Wachowskis",
-//         "actor1": "Keanu Reeves",
-//         "actor2": "Carrie-Anne Moss"
-//       },
-//       {
-//         "movie_id": 7,
-//         "title": "Star Wars: Episode IV - A New Hope",
-//         "year": 1977,
-//         "genre": "Sci-Fi",
-//         "director": "George Lucas",
-//         "actor1": "Mark Hamill",
-//         "actor2": "Harrison Ford"
-//       },
-//       {
-//         "movie_id": 8,
-//         "title": "The Silence of the Lambs",
-//         "year": 1991,
-//         "genre": "Thriller",
-//         "director": "Jonathan Demme",
-//         "actor1": "Jodie Foster",
-//         "actor2": "Anthony Hopkins"
-//       },
-//       {
-//         "movie_id": 9,
-//         "title": "Goodfellas",
-//         "year": 1990,
-//         "genre": "Crime",
-//         "director": "Martin Scorsese",
-//         "actor1": "Robert De Niro",
-//         "actor2": "Ray Liotta"
-//       },
-//       {
-//         "movie_id": 10,
-//         "title": "Jurassic Park",
-//         "year": 1993,
-//         "genre": "Sci-Fi",
-//         "director": "Steven Spielberg",
-//         "actor1": "Sam Neill",
-//         "actor2": "Laura Dern"
-//       }
-//     ]
-
 var movies = [];
 
+// load data asynchronously
 async function loadData() {
   const response = await fetch('/web-app/data.json');
   const data = await response.json();
@@ -102,16 +10,28 @@ async function loadData() {
 
 window.addEventListener('DOMContentLoaded', async () => {
 
-  const movies = await loadData()  
-  
-    var movieList = document.getElementById("movieList");
+    // retreive data upon load page
+    const movies = await loadData()  
 
-    const searchButton = document.getElementById("searchButton");
-
+    //sort by name
+    movies.sort((a, b) => {
+      if (a.title < b.title) {
+        return -1;
+      }
+      if (a.title > b.title) {
+        return 1;
+      }
+      return 0;
+    });
     
 
+    var movieList = document.getElementById("movieList");
+    const searchButton = document.getElementById("searchButton");
+
+    // display all movies upon load page
     buildList(movies)
 
+    // search feature
     searchButton.addEventListener("click", () => {
 
         const searchInput = document.getElementById("searchInput");
@@ -136,7 +56,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-
+// function to build a list of movies
 function buildList(movies) {
   Object.values(movies).forEach(movie => {
     const listItem = document.createElement("li");
