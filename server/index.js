@@ -9,21 +9,9 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import mysql from "mysql";
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT   || 8080;
 
-const db = mysql.createConnection({
-  host : '34.142.151.50',
-  user : 'root',
-  password : '',
-  connectTimeout: 20000,
-  database : 'Node'
-})
-db.connect((err)=>{
-  if(err){
-    throw err;
-  }
-  console.log("Successfully Connected");
-})
+
 
 const app = express();
 app.use(cors());
