@@ -9,8 +9,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import mysql from "mysql";
 
-const PORT = process.env.PORT   || 8080;
-
+const PORT = process.env.PORT   || 9090;
 
 
 const app = express();

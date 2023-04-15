@@ -1,50 +1,69 @@
 import mysql from "mysql";
 import dotenv from 'dotenv';
-const db_centerNode = mysql.createConnection({
+var db_centerNode = mysql.createPool({
     host : '34.142.151.50',
     user : 'root',
     password : '',
     database : 'Node' 
 })
-const db_pre1980 = mysql.createConnection({
+var db_pre1980 = mysql.createPool({
   host : '34.143.137.168',
   user : 'root',
   password : '',
   database : 'Node' 
 })
-const db_post1980 = mysql.createConnection({
+var db_post1980 = mysql.createPool({
   host : '34.142.225.216',
   user : 'root',
   password : '',
   database : 'Node'
 })
-
+const testCenterNode = () => {
+  
+}
 export const insert = async (req, res) => {
     const {title, dYear, genre,director, actor1, actor2} = req.body;
-    const post={title: "wow", dYear: 1920, genre:"ej", director:"austin", actor1:"josh",actor2:"pakyu"}
+    const post={title: "damn", dYear: 1920, genre:"ej", director:"austin", actor1:"josh",actor2:"pakyu"}
     let sql = "INSERT INTO movies SET ?";
-    let test=db_centerNode.connect((err)=>{
+    var flag=0
+    var backlog
+    let test=db_centerNode.getConnection(async (err,connection)=>{
       if(err){  
         if(post.dYear<1980){
           console.log("Recovery Pre")
+
           insertLogPre1980(post);
-          res.send("/")
+          flag=1
+          
         }
         else{
           console.log("Recovery Post")
           insertLogPost1980(post);
-          res.send("/")
+          flag=1
         }
       }
       else{
-        recoveryCheckCenter();
+        
         console.log("Successfully Connected");
       }
       
     })
+    if(flag==1){
+      console.log("WoW");
+    }
+    backlog= await recoveryCheckCenter()
+    await new Promise(res=> setTimeout(res,5000))
+    console.log(backlog);
+    var i;
+    for(i=0;i<backlog.length;i++){
+      console.log(backlog[i].sql_statement);
+      await insertNodeCenter(backlog[i].sql_statement);
+      await new Promise(res=> setTimeout(res,1000))
+    }
+    await new Promise(res=> setTimeout(res,5000))
     let query = db_centerNode.query(sql, post, (err,result)=>{
       if(err){
-        console.log("Center Node Dead")
+        console.log(err)
       }
       else{
         console.log(result);
@@ -80,14 +99,11 @@ export const insert = async (req, res) => {
       
     });
 };
-const recoveryCheckCenter = () =>{
-  let queries = checkLogPre1980()
-  console.log(queries);
-}
-const checkLogPre1980= () =>{
-  let test=db_pre1980.connect((err)=>{
+const recoveryCheckCenter = async ( ) =>{
+  var queries;
+  let test=db_pre1980.getConnection((err,connection)=>{
     if(err){  
-      return null;
+      console.log(err);
     }
     console.log("Successfully Connected");
   })
@@ -96,15 +112,22 @@ const checkLogPre1980= () =>{
     if(err){
       console.log(err);
       console.log("read failure")
-      return null
+      
     }
     else{
-      return result
+      queries=result;
+      
     }
   })
+  await new Promise(res=> setTimeout(res,5000))
+  console.log("HERE",queries);
+  return queries;
+
+  
 }
+
 const checkLogPost1980= () =>{
-  let test=db_post1980.connect((err)=>{
+  let test=db_post1980.getConnection((err,connection)=>{
     if(err){  
       return null;
     }
@@ -123,13 +146,14 @@ const checkLogPost1980= () =>{
   })
 }
 const insertLogPre1980 =(post) =>{
-  let test=db_pre1980.connect((err)=>{
+  let test=db_pre1980.getConnection((err,connection)=>{
     if(err){  
       console.log(err)
-    }
+    } 
     console.log("Successfully Connected");
+    console.log(post);
   })  
-  let restore_sql = `INSERT INTO movies SET ${post}`
+  let restore_sql = `INSERT INTO movies (title, dYear, genre, director, actor1, actor2) VALUES (${post.title},${post.dYear},${post.genre},${post.director},${post.actor1},${post.actor2})`
   let sql = `INSERT INTO logs (sql_statement) VALUES ("${restore_sql}")`
   let query = db_pre1980.query(sql, post, (err,result)=>{
     if(err){
@@ -163,13 +187,13 @@ const insertLogPre1980 =(post) =>{
 
 }
 const insertLogPost1980 =(post) =>{
-  let test=db_post1980.connect((err)=>{
+  let test=db_post1980.getConnection((err,connection)=>{
     if(err){  
       console.log(err)
     }
     console.log("Successfully Connected");
   })  
-  let restore_sql = `INSERT INTO movies SET ${post}`
+  let restore_sql = `INSERT INTO movies (title, dYear, genre, director, actor1, actor2) VALUES ("${post.title}",${post.dYear},"${post.genre}","${post.director}","${post.actor1}","${post.actor2}")`
   let sql = `INSERT INTO logs (sql_statement) VALUES ("${restore_sql}")`
   let query = db_post1980.query(sql, post, (err,result)=>{
     if(err){
@@ -203,7 +227,7 @@ const insertLogPost1980 =(post) =>{
 
 const insertNodePre1980= (post)=>{
   let sql = "INSERT INTO movies SET ?";
-  let test=db_pre1980.connect((err)=>{
+  let test=db_pre1980.getConnection((err,connection)=>{
     if(err){  
       console.log(err)
     }
@@ -241,9 +265,47 @@ const insertNodePre1980= (post)=>{
   });
 }
 
+const insertNodeCenter= async(sql)=>{
+  let test=db_centerNode.getConnection((err,connection)=>{
+    if(err){  
+      console.log(err)
+    }
+    console.log("Successfully Connected");
+  })
+  let query = db_centerNode.query(sql, (err,result)=>{
+    if(err){
+      console.log(err);
+      console.log("insert failure")
+    }
+    else{
+      const sleepQuery="DO SLEEP(10)";
+      db_centerNode.query(sleepQuery,(err,result)=>{
+        if(err){
+          console.log("Error Sleeping");
+        }
+        else{
+          console.log("Slept");
+          const commitQuery="COMMIT";
+          
+          db_centerNode.query(commitQuery,(err,result)=>{
+            if(err){
+              console.log("Error Commiting");
+            }
+            else{
+              console.log("Successful");
+            }
+          });
+        }
+      });
+      
+    }
+    
+  });
+}
+
 const insertNodePost1980= (post)=>{
   let sql = "INSERT INTO movies SET ?";
-  let test=db_post1980.connect((err)=>{
+  let test=db_post1980.getConnection((err,connection)=>{
     if(err){  
       res.redirect("/error");
     }
