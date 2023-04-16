@@ -64,17 +64,27 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-// function to build a list of movies
 function buildList(movies) {
 
   Object.values(movies).forEach(movie => {
-    const listItem = document.createElement("li");
-    listItem.classList.add("list-group-item");
-    listItem.style.listStyleType = "none";
+    
+    const container = document.createElement("div");
+    container.style.display = "flex";
+    container.style.justifyContent = "space-between";
+    container.style.alignItems = "center";
+    container.style.margin = "auto";
+    container.style.width = "40%";
+    container.style.border = "1px solid black";
+    container.style.paddingLeft = "10px";
+    container.classList.add("list-group-item");
+    
     const title = document.createElement("span");
     title.textContent = movie.title;
+
+    const buttonsContainer = document.createElement("div");
     const updateButton = document.createElement("button");
     updateButton.textContent = "Update";
+    
     updateButton.addEventListener("click", () => {
       const movieDetails = {
         movie_id: movie.movie_id,
@@ -91,16 +101,22 @@ function buildList(movies) {
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Delete";
+    deleteButton.style.margin="0px 10px";
+    
     deleteButton.addEventListener("click", () => {
       deleteMovie(movie.movie_id);
     });
-    listItem.appendChild(title);
-    listItem.appendChild(updateButton);
-    listItem.appendChild(deleteButton);
-    movieList.appendChild(listItem);
 
+    buttonsContainer.appendChild(updateButton);
+    buttonsContainer.appendChild(deleteButton);
+
+    container.appendChild(title);
+    container.appendChild(buttonsContainer);
+    movieList.appendChild(container);
 
   });
+
+
 }
 
 function selectButton(id) {
