@@ -17,6 +17,12 @@
 		<a href="/web-app/webpages/search.html">Search</a>
 		<a href="/web-app/webpages/reports.html">View Reports</a>
 	</nav>
-
+    <section>
+        <p id="isolation_text">Set isolation level:</p>
+        <button class="select-button active" id="btn1" onclick="selectButton('btn1')">Read-Uncommitted</button>
+        <button class="select-button" id="btn2" onclick="selectButton('btn2')">Read-Committed</button>
+        <button class="select-button" id="btn3" onclick="selectButton('btn3')">Repeatable Read</button>
+        <button class="select-button" id="btn4" onclick="selectButton('btn4')">Serializable</button>
+    </section>
 </body>
 </html>

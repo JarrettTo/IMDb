@@ -8,7 +8,6 @@
     <title>STADVDB-MCO2</title>
 
     <script src="../js_files/index.js"></script>
-    
     <link rel="stylesheet" type="text/css" media="all" href="/web-app/index.css">
 
 </head>
@@ -22,11 +21,8 @@
 
     <section>
         <div id="header">INSERT MOVIE</div>
-        <form>
-            <label for="movie-id">Movie ID:</label>
-            <input type="text" id="movie-id" name="movie-id" required>
-            <br>
 
+        <form>
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" required>
             <br>
@@ -55,5 +51,13 @@
           </form>
     </section>
 
+    <section>
+        <p id="isolation_text">Set isolation level:</p>
+        <button class="select-button active" id="btn1" onclick="selectButton('btn1')">Read-Uncommitted</button>
+        <button class="select-button" id="btn2" onclick="selectButton('btn2')">Read-Committed</button>
+        <button class="select-button" id="btn3" onclick="selectButton('btn3')">Repeatable Read</button>
+        <button class="select-button" id="btn4" onclick="selectButton('btn4')">Serializable</button>
+    </section>
+ 
 </body>
 </html>

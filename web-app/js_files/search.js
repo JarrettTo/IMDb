@@ -1,17 +1,25 @@
 var movies = [];
 
+
+var totalMovies;
+
+const moviesPerPage = 5;
+const totalPages = Math.ceil(totalMovies / moviesPerPage);
+
 // load data asynchronously
 async function loadData() {
   const response = await fetch('/web-app/data.json');
   const data = await response.json();
   console.log(data);
+  
   return data.movies;
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
 
     // retreive data upon load page
-    const movies = await loadData()  
+    const movies = await loadData();
+    totalMovies = movies.length;
 
     //sort by name
     movies.sort((a, b) => {
@@ -58,6 +66,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // function to build a list of movies
 function buildList(movies) {
+
   Object.values(movies).forEach(movie => {
     const listItem = document.createElement("li");
     listItem.classList.add("list-group-item");
@@ -91,16 +100,23 @@ function buildList(movies) {
     movieList.appendChild(listItem);
 
 
-
   });
+}
+
+function selectButton(id) {
+  var clickedButton = document.getElementById(id);
+  clickedButton.style.backgroundColor = "green";
+  
+  var buttons = document.getElementsByClassName("select-button");
+  for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i].id != id) {
+          buttons[i].style.backgroundColor = "#0077cc";
+      }
+  }
+  
+  console.log(id);
 }
 
 function deleteMovie(movie_id){
   
 }
-
-const totalMovies = movies.length;
-// console.log(totalMovies);
-
-const moviesPerPage = 5;
-const totalPages = Math.ceil(totalMovies / moviesPerPage);

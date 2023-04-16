@@ -1,15 +1,12 @@
 window.addEventListener('DOMContentLoaded', () => {
 
-    // get the form data
     const form = document.querySelector('form');
 
-    // upon submit, create a movie object with the inputted data
     form.addEventListener('submit', event => {
         event.preventDefault();
 
         const formData = new FormData(form);
         
-        const movie_id = formData.get('movie-id')
         const title = formData.get('title');
         const year = formData.get('year');
         const genre = formData.get('genre');
@@ -18,7 +15,6 @@ window.addEventListener('DOMContentLoaded', () => {
         const actor2 = formData.get('actor2');
 
         const movieData = {
-            movie_id,
             title,
             year,
             genre,
@@ -35,14 +31,20 @@ window.addEventListener('DOMContentLoaded', () => {
           });
 
     });
-
-    // Movie ID num only input validation
-    const numberInput = document.getElementById("movie-id");
-
-    numberInput.addEventListener("input", function(event) {
-        const value = event.target.value;
-        event.target.value = value.replace(/\D/g, "");
-    });
     
 });
+
+function selectButton(id) {
+    var clickedButton = document.getElementById(id);
+    clickedButton.style.backgroundColor = "green";
+    
+    var buttons = document.getElementsByClassName("select-button");
+    for (var i = 0; i < buttons.length; i++) {
+        if (buttons[i].id != id) {
+            buttons[i].style.backgroundColor = "#0077cc";
+        }
+    }
+    
+    console.log(id);
+}
 
