@@ -79,10 +79,24 @@ function buildList(movies) {
       localStorage.setItem("movieDetails", JSON.stringify(movieDetails));
       window.location.href = "/web-app/webpages/update.html";
     });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => {
+      deleteMovie(movie.movie_id);
+    });
     listItem.appendChild(title);
     listItem.appendChild(updateButton);
+    listItem.appendChild(deleteButton);
     movieList.appendChild(listItem);
+
+
+
   });
+}
+
+function deleteMovie(movie_id){
+  
 }
 
 const totalMovies = movies.length;
