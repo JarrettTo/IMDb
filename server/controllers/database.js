@@ -26,7 +26,7 @@ const testCenterNode = () => {
 }
 export const insert = async (req, res) => {
     const {title, dYear, genre,director, actor1, actor2} = req.body;
-    const post={title: "damn", dYear: 1990, genre:"ej", director:"austin", actor1:"josh",actor2:"pakyu"}
+    const post={title: title, dYear: dYear, genre:genre, director:director, actor1:actor1,actor2:actor2}
     let sql = "INSERT INTO movies SET ?";
     var flag=0
     var backlog, backlog2
@@ -40,6 +40,7 @@ export const insert = async (req, res) => {
 
           await insertLogPre1980(post);
           flag=1
+
           
         }
         else{
@@ -47,14 +48,16 @@ export const insert = async (req, res) => {
           await insertLogPost1980(post);
           flag=1
         }
+       
+        
       }
       else{
 
         console.log("Successfully Connected");
-        await new Promise(res=> setTimeout(res,6000))
+        await new Promise(res=> setTimeout(res,4000))
         backlog= await recoveryCheckCenterPre1980()
         await new Promise(res=> setTimeout(res,5000))
-        console.log(backlog);
+    
         var i;
         if(backlog){
           for(i=0;i<backlog.length;i++){
@@ -67,7 +70,7 @@ export const insert = async (req, res) => {
         }
         backlog2= await recoveryCheckCenterPost1980()
         await new Promise(res=> setTimeout(res,5000))
-        console.log(backlog2);
+
         if(backlog2){
           for(i=0;i<backlog2.length;i++){
             console.log(backlog2[i].sql_statement);
@@ -114,6 +117,7 @@ export const insert = async (req, res) => {
                     else{
                       await insertNodePost1980(post);
                     }
+   
                   }
                 });
               }
@@ -126,6 +130,7 @@ export const insert = async (req, res) => {
       }
       
     })
+ 
     if(flag==1){
       console.log("WoW");
     }
@@ -158,7 +163,7 @@ const recoveryCheckCenterPre1980 = async ( ) =>{
       
     }
   })
-  await new Promise(res=> setTimeout(res,5000))
+  await new Promise(res=> setTimeout(res,3000))
   console.log("HERE",queries);
   return queries;
 
@@ -171,7 +176,7 @@ const recoveryCheckCenterPost1980 = async ( ) =>{
       console.log(err);
       return null;
     }
-    console.log("Successfully Connected");
+
   })
   let sql = `SELECT * FROM logs`
   let query = db_post1980.query(sql, (err,result)=>{
@@ -185,7 +190,7 @@ const recoveryCheckCenterPost1980 = async ( ) =>{
       
     }
   })
-  await new Promise(res=> setTimeout(res,5000))
+  await new Promise(res=> setTimeout(res,3000))
   console.log("HERE",queries);
   return queries;
 
@@ -200,7 +205,7 @@ const recoveryCheckPre1980Center = async ( ) =>{
     }
     console.log("Successfully Connected");
   })
-  let sql = `SELECT * FROM logs`
+  let sql = `SELECT * FROM logs WHERE node<1980`
   let query = db_centerNode.query(sql, (err,result)=>{
     if(err){
       console.log(err);
@@ -212,7 +217,7 @@ const recoveryCheckPre1980Center = async ( ) =>{
       
     }
   })
-  await new Promise(res=> setTimeout(res,5000))
+  await new Promise(res=> setTimeout(res,3000))
   console.log("HERE",queries);
   return queries;
 
@@ -227,7 +232,7 @@ const recoveryCheckPost1980Center = async ( ) =>{
     }
     console.log("Successfully Connected");
   })
-  let sql = `SELECT * FROM logs`
+  let sql = `SELECT * FROM logs WHERE node>=1980`
   let query = db_centerNode.query(sql, (err,result)=>{
     if(err){
       console.log(err);
@@ -239,7 +244,7 @@ const recoveryCheckPost1980Center = async ( ) =>{
       
     }
   })
-  await new Promise(res=> setTimeout(res,5000))
+  await new Promise(res=> setTimeout(res,3000))
   console.log("HERE",queries);
   return queries;
 
@@ -628,7 +633,16 @@ const executeNodeCenter= async(sql)=>{
       console.log("insert failure")
     }
     else{
-      let sql2 = `SELECT * FROM movies WHERE movie_id = ${result.insertId}`
+      var sql2;
+      if(sql.charAt(0)=='U' || sql.charAt(0)=='D'){
+        console.log("ID CHECK:", sql.substring(sql.indexOf("WHERE")+16).replace("'",""))
+        sql2 = `SELECT * FROM movies WHERE movie_id = ${sql.substring(sql.indexOf("WHERE")+16).replace("'","")}`
+      }
+      else{
+        sql2 = `SELECT * FROM movies WHERE movie_id = ${result.insertId}`
+      }
+      
+      let mode = result.changedRows
       console.log(result);
       const sleepQuery="DO SLEEP(10)";
       db_centerNode.query(sleepQuery,(err,result)=>{
@@ -645,16 +659,44 @@ const executeNodeCenter= async(sql)=>{
             }
             else{
               console.log("Successful");
+             
               db_centerNode.query(sql2, async (err, result)=>{
                 if(err){
                   console.log(err);
                 }
+                
                 else{
-                  if(result[0].dYear<1980){
-                    await insertNodePre1980(result[0])
+                  
+                  if(result[0]?.dYear<1980){
+                    
+                    if(sql.charAt(0)=='U'){
+
+                      await updateNodePre1980(sql)
+                      
+                    }
+                    else if(sql.charAt(0)=='D'){
+                      await deleteNodePre1980(sql)
+                    }
+
+                    else{
+                      await insertNodePre1980(result[0])
+                    }
+                    
                   }
                   else{
-                    await insertNodePost1980(result[0])
+                    
+                    if(sql.charAt(0)=='U'){
+
+                      await updateNodePost1980(sql)
+                      
+                    }
+                    else if(sql.charAt(0)=='D'){
+                      await deleteNodePost1980(sql)
+                    }
+
+                    else{
+                      await insertNodePost1980(result[0])
+                    }
                   }
                   
                 }
@@ -783,11 +825,14 @@ const insertNodePost1980= async (post)=>{
       await new Promise(res=> setTimeout(res,5000))
       console.log(backlog);
       var i;
-      for(i=0;i<backlog.length;i++){
-        console.log(backlog[i].sql_statement);
-        await executeNodePost1980(backlog[i].sql_statement);
-        await new Promise(res=> setTimeout(res,1000))
+      if(backlog){
+        for(i=0;i<backlog.length;i++){
+          console.log(backlog[i].sql_statement);
+          await executeNodePost1980(backlog[i].sql_statement);
+          await new Promise(res=> setTimeout(res,1000))
+        }
       }
+      
       await new Promise(res=> setTimeout(res,5000))
       let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
         if(err){
@@ -831,49 +876,1018 @@ const insertNodePost1980= async (post)=>{
   
 }
 
-export const deleteRecord = async (req, res) => {
-
-    let sql = "DELETE FROM movies WHERE movie_id = ?";
-    let query = db.query(sql, req.params.id, (err,result)=>{
-      if(err){
-      }
-      console.log(result);
-      throw err;
-      res.send("DONE");
-    });
-  };
-  
 export const updateRecord = async (req, res) => {
+  const {movie_id, title, dYear, genre,director, actor1, actor2, oldYear} = req.body;
 
-    const {movie_id, title, dYear, genre,director, actor1, actor2} = req.body;
-    const post={movie_id, title, dYear, genre, director, actor1,actor2}
-    let sql = `UPDATE movies SET ? WHERE movie_id = ${req.params.id}`;
-    let query = db.query(sql, post, (err,result)=>{
-      if(err){
-        throw err;
+  const post={movie_id: movie_id, title: title, dYear: dYear, genre:genre, director:director, actor1:actor1,actor2:actor2}
+  let sql = `UPDATE movies SET title='${post.title}', dYear=${post.dYear}, genre='${post.genre}', director='${post.director}', actor1='${post.actor1}', actor2='${post.actor2}' WHERE movie_id='${post.movie_id}'`;
+  var flag=0
+  var backlog, backlog2
+  
+  let test=db_centerNode.getConnection(async (err,connection)=>{
+    
+    if(err){  
+      
+
+      if(oldYear<1980){
+        console.log("Recovery Pre")
+
+        await updateLogPre1980(post);
+        flag=1
+        
       }
-      console.log(result);
-      res.send("DONE");
-    });
+      else{
+        console.log("Recovery Post")
+        await updateLogPost1980(post);
+        flag=1
+      }
+      return res.json("Main Node Down");
+    }
+    else{
+      console.log(post);
+      console.log("Successfully Connected");
+      await new Promise(res=> setTimeout(res,6000))
+      backlog= await recoveryCheckCenterPre1980()
+      await new Promise(res=> setTimeout(res,5000))
+
+      var i;
+      if(backlog){
+        for(i=0;i<backlog.length;i++){
+          console.log(backlog[i].sql_statement);
+          await executeNodeCenter(backlog[i].sql_statement);
+
+          await new Promise(res=> setTimeout(res,1000))
+        }
+        await new Promise(res=> setTimeout(res,5000))
+      }
+      backlog2= await recoveryCheckCenterPost1980()
+      await new Promise(res=> setTimeout(res,5000))
+
+      if(backlog2){
+        for(i=0;i<backlog2.length;i++){
+          console.log(backlog2[i].sql_statement);
+          await executeNodeCenter(backlog2[i].sql_statement);
+
+          await new Promise(res=> setTimeout(res,1000))
+        }
+        await new Promise(res=> setTimeout(res,5000))
+      }
+      let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+        if(err){
+          console.log(err);
+        }
+        else{
+          
+        }
+      });
+      await new Promise(res=> setTimeout(res,2000))
+      let query = db_centerNode.query(sql, (err,result)=>{
+        if(err){
+          console.log(err)
+        }
+        else{
+          console.log(result);
+          post.movie_id=result.insertId
+          const sleepQuery="DO SLEEP(10)";
+          db_centerNode.query(sleepQuery,(err,result)=>{
+            if(err){
+              console.log("Error Sleeping");
+            }
+            else{
+              console.log("Slept");
+              const commitQuery="COMMIT";
+              db_centerNode.query(commitQuery,async (err,result)=>{
+                if(err){
+                  console.log("Error Commiting At Main Node");
+                }
+                else{
+                  console.log("Main Node Update Commited");
+                  console.log(post.dYear);
+                  if(oldYear<1980){
+                    await updateNodePre1980(sql);
+                  }
+                  else{
+                    await updateNodePost1980(sql);
+                  }
+                  return res.json("Success")
+                }
+              });
+            }
+          });
+          
+          
+        }
+        
+      });
+    }
+    
+  })
+  
+  if(flag==1){
+    console.log("WoW");
+  }
+  else{
+
+  
+    
+  }
+};
+const updateLogCenter =async (restore_sql, year) =>{
+  let test=db_centerNode.getConnection((err,connection)=>{
+    if(err){  
+      console.log(err)
+    } 
+    console.log("Successfully Connected");
+    
+  })
+  let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+    if(err){
+      console.log("Error Commiting");
+    }
+    else{
+      console.log("Begun");
+    }
+  });  
+  
+  let sql = `INSERT INTO logs (sql_statement, node) VALUES ("${restore_sql}",${year})`
+  let query = db_centerNode.query(sql,  (err,result)=>{
+    if(err){
+      console.log(err);
+      console.log("insert failure")
+    }
+    else{
+      const sleepQuery="DO SLEEP(10)";
+      db_centerNode.query(sleepQuery,(err,result)=>{
+        if(err){
+          console.log("Error Sleeping");
+        }
+        else{
+          console.log("Slept");
+          const commitQuery="COMMIT";
+          
+          db_centerNode.query(commitQuery,(err,result)=>{
+            if(err){
+              console.log("Error Commiting");
+            }
+            else{
+              console.log("Successful");
+            }
+          });
+        }
+      });  
+    
+    }
+  })
+  
+
+}
+const updateNodePre1980= async (sql)=>{
+
+  var backlog;
+  let test=db_pre1980.getConnection(async (err,connection)=>{
+    if(err){  
+      console.log("Dead node 3");
+      await updateLogCenter(sql,1979);
+    }
+    else{
+      console.log("Successfully Connected");
+      await new Promise(res=> setTimeout(res,6000))
+      backlog= await recoveryCheckPre1980Center()
+      await new Promise(res=> setTimeout(res,5000))
+      console.log(backlog);
+      var i;
+      for(i=0;i<backlog.length;i++){
+        console.log(backlog[i].sql_statement);
+        await executeNodePre1980(backlog[i].sql_statement);
+        await new Promise(res=> setTimeout(res,1000))
+      }
+      await new Promise(res=> setTimeout(res,5000))
+      let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+        if(err){
+          console.log("Error Commiting");
+        }
+        else{
+          console.log("Begun");
+        }
+      });
+      let query = db_pre1980.query(sql, (err,result)=>{
+        if(err){
+          console.log("insert failure")
+        }
+        else{
+          const sleepQuery="DO SLEEP(10)";
+          db_pre1980.query(sleepQuery,(err,result)=>{
+            if(err){
+              console.log("Error Sleeping");
+            }
+            else{
+              console.log("Slept");
+              const commitQuery="COMMIT";
+              db_pre1980.query(commitQuery,(err,result)=>{
+                if(err){
+                  console.log("Error Commiting");
+                }
+                else{
+                  console.log("Successful");
+                }
+              });
+            }
+          });
+          
+          
+        }
+        
+      });
+    }
+    
+  })
+  
+}
+const updateNodePost1980= async (sql)=>{
+
+  var backlog;
+  let test=db_post1980.getConnection(async (err,connection)=>{
+    if(err){  
+      console.log("Dead node 3");
+      await updateLogCenter(sql,1981);
+    }
+    else{
+      console.log("Successfully Connected");
+      await new Promise(res=> setTimeout(res,6000))
+      backlog= await recoveryCheckPost1980Center()
+      await new Promise(res=> setTimeout(res,5000))
+      console.log(backlog);
+      var i;
+      for(i=0;i<backlog.length;i++){
+        console.log(backlog[i].sql_statement);
+        await executeNodePost1980(backlog[i].sql_statement);
+        await new Promise(res=> setTimeout(res,1000))
+      }
+      await new Promise(res=> setTimeout(res,5000))
+      let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+        if(err){
+          console.log("Error Commiting");
+        }
+        else{
+          console.log("Begun");
+        }
+      });
+      let query = db_post1980.query(sql, (err,result)=>{
+        if(err){
+          console.log("insert failure")
+        }
+        else{
+          const sleepQuery="DO SLEEP(10)";
+          db_post1980.query(sleepQuery,(err,result)=>{
+            if(err){
+              console.log("Error Sleeping");
+            }
+            else{
+              console.log("Slept");
+              const commitQuery="COMMIT";
+              db_post1980.query(commitQuery,(err,result)=>{
+                if(err){
+                  console.log("Error Commiting");
+                }
+                else{
+                  console.log("Successful");
+                }
+              });
+            }
+          });
+          
+          
+        }
+        
+      });
+    }
+    
+  })
+  
+}
+const updateLogPost1980 =async (post) =>{
+  let test=db_post1980.getConnection((err,connection)=>{
+    if(err){  
+      console.log(err)
+    }
+    console.log("Successfully Connected");
+  })
+  let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+    if(err){
+      console.log("Error Commiting");
+    }
+    else{
+      console.log("Begun");
+    }
+  });  
+  let restore_sql = `UPDATE movies SET title='${post.title}', dYear=${post.dYear}, genre='${post.genre}', director='${post.director}', actor1='${post.actor1}', actor2='${post.actor2}' WHERE movie_id='${post.movie_id}'`
+  let sql = `INSERT INTO logs (sql_statement) VALUES ("${restore_sql}")`
+  let query = db_post1980.query(sql, post, (err,result)=>{
+    if(err){
+      console.log(err);
+      console.log("insert failure")
+    }
+    else{
+      const sleepQuery="DO SLEEP(10)";
+      db_post1980.query(sleepQuery,(err,result)=>{
+        if(err){
+          console.log("Error Sleeping");
+        }
+        else{
+          console.log("Slept");
+          const commitQuery="COMMIT";
+          
+          db_post1980.query(commitQuery,(err,result)=>{
+            if(err){
+              console.log("Error Commiting");
+            }
+            else{
+              console.log("Successful");
+            }
+          });
+        }
+      });  
+    
+    }
+  })
+}
+
+const updateLogPre1980 =async (post) =>{
+  let test=db_pre1980.getConnection((err,connection)=>{
+    if(err){  
+      console.log(err)
+    }
+    console.log("Successfully Connected");
+  })
+  let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+    if(err){
+      console.log("Error Commiting");
+    }
+    else{
+      console.log("Begun");
+    }
+  });  
+  let restore_sql = `UPDATE movies SET title='${post.title}', dYear=${post.dYear}, genre='${post.genre}', director='${post.director}', actor1='${post.actor1}', actor2='${post.actor2}' WHERE movie_id='${post.movie_id}'`
+  let sql = `INSERT INTO logs (sql_statement) VALUES ("${restore_sql}")`
+  let query = db_pre1980.query(sql, post, (err,result)=>{
+    if(err){
+      console.log(err);
+      console.log("insert failure")
+    }
+    else{
+      const sleepQuery="DO SLEEP(10)";
+      db_pre1980.query(sleepQuery,(err,result)=>{
+        if(err){
+          console.log("Error Sleeping");
+        }
+        else{
+          console.log("Slept");
+          const commitQuery="COMMIT";
+          
+          db_pre1980.query(commitQuery,(err,result)=>{
+            if(err){
+              console.log("Error Commiting");
+            }
+            else{
+              console.log("Successful");
+            }
+          });
+        }
+      });  
+    
+    }
+  })
+}
+
+export const deleteRecord = async (req, res) => {
+  const {oldYear} = req.body;
+  const id=req.params.id
+  const testYear=1972
+  let sql = `DELETE FROM movies WHERE movie_id='${id}'`;
+  var flag=0
+  var backlog, backlog2
+  let test=db_centerNode.getConnection(async (err,connection)=>{
+    
+    if(err){  
+      
+
+      if(testYear<1980){
+        console.log("Recovery Pre")
+
+        await deleteActionLogPre1980(sql);
+        flag=1
+        
+      }
+      else{
+        console.log("Recovery Post")
+        await deleteActionLogPost1980(sql);
+        flag=1
+      }
+      return res.json("Main node is down");
+    }
+    else{
+
+      console.log("Successfully Connected");
+      await new Promise(res=> setTimeout(res,6000))
+      backlog= await recoveryCheckCenterPre1980()
+      await new Promise(res=> setTimeout(res,5000))
+      console.log(backlog);
+      var i;
+      if(backlog){
+        for(i=0;i<backlog.length;i++){
+          console.log(backlog[i].sql_statement);
+          await executeNodeCenter(backlog[i].sql_statement);
+
+          await new Promise(res=> setTimeout(res,1000))
+        }
+        await new Promise(res=> setTimeout(res,5000))
+      }
+      backlog2= await recoveryCheckCenterPost1980()
+      await new Promise(res=> setTimeout(res,5000))
+      console.log(backlog2);
+      if(backlog2){
+        for(i=0;i<backlog2.length;i++){
+          console.log(backlog2[i].sql_statement);
+          await executeNodeCenter(backlog2[i].sql_statement);
+
+          await new Promise(res=> setTimeout(res,1000))
+        }
+        await new Promise(res=> setTimeout(res,5000))
+      }
+      let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+        if(err){
+          console.log("Error Commiting");
+        }
+        else{
+          console.log("Begun");
+        }
+      });
+      await new Promise(res=> setTimeout(res,2000))
+      let query = db_centerNode.query(sql, (err,result)=>{
+        if(err){
+          console.log(err)
+        }
+        else{
+          console.log(result);
+          const sleepQuery="DO SLEEP(10)";
+          db_centerNode.query(sleepQuery,(err,result)=>{
+            if(err){
+              console.log("Error Sleeping");
+            }
+            else{
+              console.log("Slept");
+              const commitQuery="COMMIT";
+              db_centerNode.query(commitQuery,async (err,result)=>{
+                if(err){
+                  console.log("Error Commiting");
+                }
+                else{
+                  console.log("Commited");
+    
+                  if(testYear<1980){
+
+                    await deleteNodePre1980(sql);
+                  }
+                  else{
+                    await deleteNodePost1980(sql);
+                  }
+                  return res.json("Delete success");
+                }
+              });
+            }
+          });
+          
+          
+        }
+        
+      });
+    }
+    
+  })
+
+  if(flag==1){
+    console.log("WoW");
+  }
+  else{
+
+  
+    
+  }
 };
 
+const deleteNodePre1980= async (sql)=>{
+
+  var backlog;
+  let test=db_pre1980.getConnection(async (err,connection)=>{
+    if(err){  
+      console.log("Dead node 2");
+      await updateLogCenter(sql,1979);
+    }
+    else{
+      console.log("Successfully Connected");
+      await new Promise(res=> setTimeout(res,4000))
+      backlog= await recoveryCheckPre1980Center()
+      await new Promise(res=> setTimeout(res,4000))
+      console.log(backlog);
+      var i;
+      if(backlog){
+        for(i=0;i<backlog.length;i++){
+          console.log(backlog[i].sql_statement);
+          await executeNodePre1980(backlog[i].sql_statement);
+          await new Promise(res=> setTimeout(res,1000))
+        }
+        await new Promise(res=> setTimeout(res,5000))
+      }
+      
+      let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+        if(err){
+          console.log("Error Commiting");
+        }
+        else{
+          console.log("Begun");
+        }
+      });
+      let query = db_pre1980.query(sql, (err,result)=>{
+        if(err){
+          console.log("insert failure")
+        }
+        else{
+          const sleepQuery="DO SLEEP(10)";
+          db_pre1980.query(sleepQuery,(err,result)=>{
+            if(err){
+              console.log("Error Sleeping");
+            }
+            else{
+              console.log("Slept");
+              const commitQuery="COMMIT";
+              db_pre1980.query(commitQuery,(err,result)=>{
+                if(err){
+                  console.log("Error Commiting");
+                }
+                else{
+                  console.log("Successful");
+                }
+              });
+            }
+          });
+          
+          
+        }
+        
+      });
+    }
+    
+  })
+  
+}
+const deleteNodePost1980= async (sql)=>{
+  console.log("11")
+  var backlog;
+  let test=db_post1980.getConnection(async (err,connection)=>{
+    if(err){  
+      console.log("Dead node 3");
+
+      await updateLogCenter(sql,1981);
+    }
+    else{
+      console.log("Successfully Connected");
+      await new Promise(res=> setTimeout(res,6000))
+      backlog= await recoveryCheckPost1980Center()
+      await new Promise(res=> setTimeout(res,5000))
+      console.log(backlog);
+      var i;
+      if(backlog){
+        for(i=0;i<backlog.length;i++){
+          console.log(backlog[i].sql_statement);
+          await executeNodePost1980(backlog[i].sql_statement);
+          await new Promise(res=> setTimeout(res,1000))
+        }
+        await new Promise(res=> setTimeout(res,5000))
+      }
+      
+      let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+        if(err){
+          console.log("Error Commiting");
+        }
+        else{
+          console.log("Begun");
+        }
+      });
+      let query = db_post1980.query(sql, (err,result)=>{
+        if(err){
+          console.log("insert failure")
+        }
+        else{
+          const sleepQuery="DO SLEEP(10)";
+          db_post1980.query(sleepQuery,(err,result)=>{
+            if(err){
+              console.log("Error Sleeping");
+            }
+            else{
+              console.log("Slept");
+              const commitQuery="COMMIT";
+              db_post1980.query(commitQuery,(err,result)=>{
+                if(err){
+                  console.log("Error Commiting");
+                }
+                else{
+                  console.log("Successful");
+                }
+              });
+            }
+          });
+          
+          
+        }
+        
+      });
+    }
+    
+  })
+  
+}
+const deleteActionLogPost1980 =async (restore_sql) =>{
+  let test=db_post1980.getConnection((err,connection)=>{
+    if(err){  
+      console.log(err)
+    }
+    console.log("Successfully Connected");
+  })
+  let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+    if(err){
+      console.log("Error Commiting");
+    }
+    else{
+      console.log("Begun");
+    }
+  });  
+  let sql = `INSERT INTO logs (sql_statement) VALUES ("${restore_sql}")`
+  let query = db_post1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err);
+      console.log("insert failure")
+    }
+    else{
+      const sleepQuery="DO SLEEP(10)";
+      db_post1980.query(sleepQuery,(err,result)=>{
+        if(err){
+          console.log("Error Sleeping");
+        }
+        else{
+          console.log("Slept");
+          const commitQuery="COMMIT";
+          
+          db_post1980.query(commitQuery,(err,result)=>{
+            if(err){
+              console.log("Error Commiting");
+            }
+            else{
+              console.log("Successful");
+            }
+          });
+        }
+      });  
+    
+    }
+  })
+}
+
+const deleteActionLogPre1980 =async (restore_sql) =>{
+  let test=db_pre1980.getConnection((err,connection)=>{
+    if(err){  
+      console.log(err)
+    }
+    console.log("Successfully Connected");
+  })
+  let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+    if(err){
+      console.log("Error Commiting");
+    }
+    else{
+      console.log("Begun");
+    }
+  });  
+
+  let sql = `INSERT INTO logs (sql_statement) VALUES ("${restore_sql}")`
+  let query = db_pre1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err);
+      console.log("insert failure")
+    }
+    else{
+      const sleepQuery="DO SLEEP(10)";
+      db_pre1980.query(sleepQuery,(err,result)=>{
+        if(err){
+          console.log("Error Sleeping");
+        }
+        else{
+          console.log("Slept");
+          const commitQuery="COMMIT";
+          
+          db_pre1980.query(commitQuery,(err,result)=>{
+            if(err){
+              console.log("Error Commiting");
+            }
+            else{
+              console.log("Successful");
+            }
+          });
+        }
+      });  
+    
+    }
+  })
+}
+
+export const setUncommited = async (req, res) => {
+  
+  let sql = `SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED`;
+  let query = db_centerNode.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+  });
+  
+  let query4 = db_pre1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+    console.log(result);
+
+  });
+  
+  let query6 = db_post1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+    console.log(result);
+
+  });
+  await new Promise(res=> setTimeout(res,2000))
+  console.log("Isolation Level Set to Read Uncommited");
+};
+
+export const setCommited = async (req, res) => {
+  let sql2 = `SET AUTOCOMMIT=0`;
+  let query2 = db_centerNode.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  let sql = `SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED`;
+  let query = db_centerNode.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  let query4 = db_pre1980.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  let query3 = db_pre1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  let query5 = db_post1980.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+  });
+  let query6 = db_post1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  await new Promise(res=> setTimeout(res,2000))
+
+  console.log("Isolation Level Set to Read Commited");
+};
+export const setRepeatable = async (req, res) => {
+  let sql2 = `SET AUTOCOMMIT=0`;
+  let query2 = db_centerNode.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+    
+  });
+  let sql = `SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ`;
+  let query = db_centerNode.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  let query4 = db_pre1980.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  let query3 = db_pre1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+
+  });
+  let query5 = db_post1980.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+  });
+  let query6 = db_post1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+    }
+
+    
+  });
+  await new Promise(res=> setTimeout(res,2000))
+  console.log("Isolation Level Set to Read Repeatable");
+};
+export const setSerializable = async (req, res) => {
+  let sql2 = `SET AUTOCOMMIT=0`;
+  let query2 = db_centerNode.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+
+    }
+
+  });
+  let sql = `SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE`;
+  let query = db_centerNode.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+
+    }
+
+
+  });
+  let query4 = db_pre1980.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+
+    }
+
+
+  });
+  let query3 = db_pre1980.query(sql, (err,result)=>{
+    if(err){
+      console.log(err)
+
+    }
+
+
+  });
+  let query5 = db_post1980.query(sql2, (err,result)=>{
+    if(err){
+      console.log(err)
+
+    }
+
+  });
+  let query6 = db_post1980.query(sql, (err,result)=>{
+    if(err){
+      
+      console.log(err)
+
+    }
+    
+  });
+  await new Promise(res=> setTimeout(res,2000))
+  console.log("Isolation Level Set to Read Serializable");
+};
 export const viewRecords = async (req, res) => {
-    let sql = `SELECT * FROM movies`;
-    let query = db.query(sql, (err,result)=>{
-      if(err){
-        throw err;
+    const id = (req.params.id-1)*10
+    var records=[]
+    let sql = `SELECT * FROM movies LIMIT 10 OFFSET ${id}`;
+    let beginsql = `BEGIN`;
+    let test1=db_pre1980.getConnection((err,connection)=>{
+      if(err){  
+        console.log(err)
+
       }
-      console.log(result);
-      res.send("DONE");
+
+    })
+    let test2=db_post1980.getConnection((err,connection)=>{
+      if(err){  
+        console.log(err)
+
+      }
+
+    })
+    let beginquery = db_pre1980.query(beginsql, (err,result)=>{
+      if(err){
+        console.log(err)
+
+      }
     });
+    let query1 = db_pre1980.query(sql, (err,result)=>{
+      if(err){
+        console.log(err)
+
+      }
+      else{
+        records.push(...result)
+      }
+    });
+    let query4 = db_pre1980.query("COMMIT", (err,result)=>{
+      if(err){
+        console.log(err)
+  
+      }
+      else{
+        
+      }
+    });
+    let beginquery2 = db_post1980.query(beginsql, (err,result)=>{
+      if(err){
+        console.log(err)
+       
+      }
+    });
+    let query2 = db_post1980.query(sql, (err,result)=>{
+      if(err){
+        console.log(err)
+        
+      }
+      else{
+        records.push(...result)
+      }
+    });
+    let query3 = db_post1980.query("COMMIT", (err,result)=>{
+      if(err){
+        console.log(err)
+        
+      }
+      else{
+        
+      }
+    });
+    
+    await new Promise(res=> setTimeout(res,20000))
+    records.sort((a, b) => a.movie_id - b.movie_id);
+    console.log(records);
+    res.json(records);
 };
+
+
 export const viewRecord = async (req, res) => {
     let sql = `SELECT * FROM movies WHERE movie_id = ${req.params.id}`;
+    var result1;
+    let beginsql = `BEGIN`;
+    let test1=db_centerNode.getConnection((err,connection)=>{
+      if(err){  
+        console.log(err)
+        
+      }
+
+    })
+    let beginquery = db_centerNode.query(beginsql, (err,result)=>{
+      if(err){
+        console.log(err)
+        
+      }
+    });
     let query = db_centerNode.query(sql, (err,result)=>{
       if(err){
-        throw err;
+        console.log(err)
+        
       }
-      console.log(result);
-      res.send("DONE");
+      else{
+        result1=result
+      }
+
+      
+      
     });
+    let query3 = db_centerNode.query("COMMIT", (err,result)=>{
+      if(err){
+        console.log(err)
+        
+      }
+      else{
+        
+      }
+    });
+    await new Promise(res=> setTimeout(res,1000))
+    res.json(result1);
 };
