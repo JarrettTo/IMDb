@@ -1,26 +1,31 @@
 window.addEventListener('DOMContentLoaded', () => {
 
-    // insert movie 
+    // get the form data
     const form = document.querySelector('form');
 
+    // upon submit, create a movie object with the inputted data
     form.addEventListener('submit', event => {
     event.preventDefault();
 
     const formData = new FormData(form);
-
+    
+    const movie_id = formData.get('movie-id')
     const title = formData.get('title');
     const year = formData.get('year');
     const genre = formData.get('genre');
     const director = formData.get('director');
-    const leadActor = formData.get('leadActor');
+    const actor1 = formData.get('actor1');
+    const actor2 = formData.get('actor2');
 
-    // const movieData = {
-    //     title,
-    //     year,
-    //     genre,
-    //     director,
-    //     leadActor
-    // };
+    const movieData = {
+        movie_id,
+        title,
+        year,
+        genre,
+        director,
+        actor1,
+        actor2
+    };
 
     console.log(movieData);
     });
@@ -29,8 +34,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const numberInput = document.getElementById("movie-id");
 
     numberInput.addEventListener("input", function(event) {
-    const value = event.target.value;
-    event.target.value = value.replace(/\D/g, "");
+        const value = event.target.value;
+        event.target.value = value.replace(/\D/g, "");
     });
 
     
