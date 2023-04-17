@@ -279,7 +279,7 @@ const insertLogPre1980 =async (post) =>{
       console.log("Begun");
     }
   });  
-  let restore_sql = `INSERT INTO movies (title, dYear, genre, director, actor1, actor2) VALUES ('${post.title}','${post.dYear}','${post.genre}','${post.director}','${post.actor1}','${post.actor2}')`
+  let restore_sql = `INSERT INTO movies (movie_id, title, dYear, genre, director, actor1, actor2) VALUES (${post.movie_id},'${post.title}','${post.dYear}','${post.genre}','${post.director}','${post.actor1}','${post.actor2}')`
   let sql = `INSERT INTO logs (sql_statement) VALUES ("${restore_sql}")`
   let query = db_pre1980.query(sql, post, (err,result)=>{
     if(err){
