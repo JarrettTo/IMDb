@@ -1894,14 +1894,28 @@ export const viewRecord = async (req, res) => {
       }
 
     })
-    let isoQuery=db_centerNode.query(`SET TRANSACTION ISOLATION LEVEL ${isoLevel}`,async (err,result)=>{
+
+    let tranCount=db_centerNode.query(`SELECT @@autocommit`,async (err,result)=>{
       if(err){
         console.log(err)
       }
       else{
-    
+        console.log(result[0])
+        if(result[0]['@@autocommit']==1){
+          let isoQuery=db_centerNode.query(`SET TRANSACTION ISOLATION LEVEL ${isoLevel}`,async (err,result)=>{
+            if(err){
+      
+            }
+            else{
+          
+            }
+          });
+        }
+        
       }
     });
+  
+    
     await new Promise(res=> setTimeout(res,500))
     let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
       if(err){
