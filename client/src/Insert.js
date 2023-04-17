@@ -40,6 +40,18 @@ const Insert =() =>{
           
         });
     };
+    const setUncommitted= async ()=>{
+        setPostData({...postData, isoLevel:"READ UNCOMMITTED"})
+    }
+    const setCommitted= async ()=>{
+        setPostData({...postData, isoLevel:"READ COMMITTED"})
+    }
+    const setRepeatable= async ()=>{
+        setPostData({...postData, isoLevel:"REPEATABLE READ"})
+    }
+    const setSerializable= async ()=>{
+        setPostData({...postData, isoLevel:"SERIALIZABLE"})
+    }
     
     return(
         <>
@@ -132,6 +144,7 @@ const Insert =() =>{
                 
                 variant="contained"
                 size="large"
+                onClick={setUncommitted}
                 fullWidth
             >
                 Read Uncommited
@@ -140,7 +153,7 @@ const Insert =() =>{
                 
                 variant="contained"
                 size="large"
-                
+                onClick={setCommitted}
                 fullWidth
             >
                 Read Commited
@@ -149,6 +162,7 @@ const Insert =() =>{
                 
                 variant="contained"
                 size="large"
+                onClick={setRepeatable}
                 
                 fullWidth
             >
@@ -158,10 +172,10 @@ const Insert =() =>{
                 
                 variant="contained"
                 size="large"
-                
+                onClick={setSerializable}
                 fullWidth
             >
-                Serialization
+                Serializable
             </Button> 
         </div>
         </>

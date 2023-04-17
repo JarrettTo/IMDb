@@ -1,31 +1,34 @@
-import mysql from "mysql";
+import mysql from "mysql2";
 import dotenv from 'dotenv';
 var db_centerNode = mysql.createPool({
     host : '34.142.151.50',
     user : 'root',
     password : '',
     connectTimeout: 2000, 
-    database : 'Node' 
+    database : 'Node',
+    isolationLevel: 'READ COMMITTED'
 })
 var db_pre1980 = mysql.createPool({
   host : '34.143.137.168',
   user : 'root',
   password : '',
   connectTimeout: 2000, 
-  database : 'Node' 
+  database : 'Node',
+  isolationLevel: 'READ COMMITTED'
 })
 var db_post1980 = mysql.createPool({
   host : '34.142.225.216',
   user : 'root',
   password : '',
   connectTimeout: 2000, 
-  database : 'Node'
+  database : 'Node',
+  isolationLevel: 'READ COMMITTED'
 })
 const testCenterNode = () => {
   
 }
 export const insert = async (req, res) => {
-    const {title, dYear, genre,director, actor1, actor2} = req.body;
+    const {title, dYear, genre,director, actor1, actor2, isoLevel} = req.body;
     const post={title: title, dYear: dYear, genre:genre, director:director, actor1:actor1,actor2:actor2}
     let sql = "INSERT INTO movies SET ?";
     var flag=0
@@ -54,9 +57,9 @@ export const insert = async (req, res) => {
       else{
 
         console.log("Successfully Connected");
-        await new Promise(res=> setTimeout(res,4000))
+        await new Promise(res=> setTimeout(res,2000))
         backlog= await recoveryCheckCenterPre1980()
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,3000))
     
         var i;
         if(backlog){
@@ -66,10 +69,10 @@ export const insert = async (req, res) => {
   
             await new Promise(res=> setTimeout(res,1000))
           }
-          await new Promise(res=> setTimeout(res,5000))
+         
         }
         backlog2= await recoveryCheckCenterPost1980()
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,2000))
 
         if(backlog2){
           for(i=0;i<backlog2.length;i++){
@@ -78,17 +81,26 @@ export const insert = async (req, res) => {
   
             await new Promise(res=> setTimeout(res,1000))
           }
-          await new Promise(res=> setTimeout(res,5000))
+          
         }
-        let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+        let isoQuery=db_centerNode.query(`SET TRANSACTION ISOLATION LEVEL ${isoLevel}`,async (err,result)=>{
           if(err){
-            console.log("Error Commiting");
+            console.log("Error Commiting1");
           }
           else{
-            console.log("Begun");
+            console.log("Begun1");
+          }
+        })
+        await new Promise(res=> setTimeout(res,500))
+        let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
+          if(err){
+            console.log("Error Commiting2");
+          }
+          else{
+            console.log("Begun2");
           }
         });
-        await new Promise(res=> setTimeout(res,2000))
+        await new Promise(res=> setTimeout(res,500))
         let query = db_centerNode.query(sql, post, (err,result)=>{
           if(err){
             console.log(err)
@@ -259,7 +271,7 @@ const insertLogPre1980 =async (post) =>{
     console.log("Successfully Connected");
     console.log(post);
   })
-  let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -309,7 +321,7 @@ const insertLogCenter =async (post) =>{
     console.log("Successfully Connected");
     console.log(post);
   })
-  let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -360,7 +372,7 @@ const deleteLogPost1980 =async (sql2) =>{
     console.log("Successfully Connected");
 
   })
-  let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -409,7 +421,7 @@ const deleteLogPre1980 =async (sql2) =>{
     console.log("Successfully Connected");
 
   })
-  let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -459,7 +471,7 @@ const deleteLogCenter =async (sql2) =>{
     console.log("Successfully Connected");
 
   })
-  let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -507,7 +519,7 @@ const insertLogPost1980 =async (post) =>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -562,13 +574,16 @@ const insertNodePre1980= async (post)=>{
       await new Promise(res=> setTimeout(res,5000))
       console.log(backlog);
       var i;
-      for(i=0;i<backlog.length;i++){
-        console.log(backlog[i].sql_statement);
-        await executeNodePre1980(backlog[i].sql_statement);
-        await new Promise(res=> setTimeout(res,1000))
+      if(backlog){
+        for(i=0;i<backlog.length;i++){
+          console.log(backlog[i].sql_statement);
+          await executeNodePre1980(backlog[i].sql_statement);
+          await new Promise(res=> setTimeout(res,1000))
+        }
       }
+      
       await new Promise(res=> setTimeout(res,5000))
-      let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+      let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
         if(err){
           console.log("Error Commiting");
         }
@@ -619,7 +634,7 @@ const executeNodeCenter= async(sql)=>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -720,7 +735,7 @@ const executeNodePost1980= async(sql)=>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -768,7 +783,7 @@ const executeNodePre1980= async(sql)=>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -834,7 +849,7 @@ const insertNodePost1980= async (post)=>{
       }
       
       await new Promise(res=> setTimeout(res,5000))
-      let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+      let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
         if(err){
           console.log("Error Commiting");
         }
@@ -877,7 +892,7 @@ const insertNodePost1980= async (post)=>{
 }
 
 export const updateRecord = async (req, res) => {
-  const {movie_id, title, dYear, genre,director, actor1, actor2, oldYear} = req.body;
+  const {movie_id, title, dYear, genre,director, actor1, actor2, oldYear, isoLevel} = req.body;
 
   const post={movie_id: movie_id, title: title, dYear: dYear, genre:genre, director:director, actor1:actor1,actor2:actor2}
   let sql = `UPDATE movies SET title='${post.title}', dYear=${post.dYear}, genre='${post.genre}', director='${post.director}', actor1='${post.actor1}', actor2='${post.actor2}' WHERE movie_id='${post.movie_id}'`;
@@ -906,9 +921,9 @@ export const updateRecord = async (req, res) => {
     else{
       console.log(post);
       console.log("Successfully Connected");
-      await new Promise(res=> setTimeout(res,6000))
+      await new Promise(res=> setTimeout(res,2000))
       backlog= await recoveryCheckCenterPre1980()
-      await new Promise(res=> setTimeout(res,5000))
+      await new Promise(res=> setTimeout(res,2000))
 
       var i;
       if(backlog){
@@ -918,10 +933,10 @@ export const updateRecord = async (req, res) => {
 
           await new Promise(res=> setTimeout(res,1000))
         }
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,2000))
       }
       backlog2= await recoveryCheckCenterPost1980()
-      await new Promise(res=> setTimeout(res,5000))
+      await new Promise(res=> setTimeout(res,2000))
 
       if(backlog2){
         for(i=0;i<backlog2.length;i++){
@@ -930,14 +945,22 @@ export const updateRecord = async (req, res) => {
 
           await new Promise(res=> setTimeout(res,1000))
         }
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,2000))
       }
-      let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+      let isoQuery=db_centerNode.query(`SET TRANSACTION ISOLATION LEVEL ${isoLevel}`,async (err,result)=>{
+        if(err){
+          console.log("Error Commiting1");
+        }
+        else{
+          console.log("Begun1");
+        }
+      });
+      let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
         if(err){
           console.log(err);
         }
         else{
-          
+          console.log("Begun2");
         }
       });
       await new Promise(res=> setTimeout(res,2000))
@@ -1000,7 +1023,7 @@ const updateLogCenter =async (restore_sql, year) =>{
     console.log("Successfully Connected");
     
   })
-  let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -1062,7 +1085,7 @@ const updateNodePre1980= async (sql)=>{
         await new Promise(res=> setTimeout(res,1000))
       }
       await new Promise(res=> setTimeout(res,5000))
-      let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+      let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
         if(err){
           console.log("Error Commiting");
         }
@@ -1124,7 +1147,7 @@ const updateNodePost1980= async (sql)=>{
         await new Promise(res=> setTimeout(res,1000))
       }
       await new Promise(res=> setTimeout(res,5000))
-      let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+      let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
         if(err){
           console.log("Error Commiting");
         }
@@ -1172,7 +1195,7 @@ const updateLogPost1980 =async (post) =>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -1219,7 +1242,7 @@ const updateLogPre1980 =async (post) =>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -1260,7 +1283,7 @@ const updateLogPre1980 =async (post) =>{
 }
 
 export const deleteRecord = async (req, res) => {
-  const {oldYear} = req.body;
+  const {oldYear,isoLevel} = req.body;
   const id=req.params.id
   const testYear=1972
   let sql = `DELETE FROM movies WHERE movie_id='${id}'`;
@@ -1271,7 +1294,7 @@ export const deleteRecord = async (req, res) => {
     if(err){  
       
 
-      if(testYear<1980){
+      if(oldYear<1980){
         console.log("Recovery Pre")
 
         await deleteActionLogPre1980(sql);
@@ -1288,9 +1311,9 @@ export const deleteRecord = async (req, res) => {
     else{
 
       console.log("Successfully Connected");
-      await new Promise(res=> setTimeout(res,6000))
+      await new Promise(res=> setTimeout(res,2000))
       backlog= await recoveryCheckCenterPre1980()
-      await new Promise(res=> setTimeout(res,5000))
+      await new Promise(res=> setTimeout(res,2000))
       console.log(backlog);
       var i;
       if(backlog){
@@ -1300,10 +1323,10 @@ export const deleteRecord = async (req, res) => {
 
           await new Promise(res=> setTimeout(res,1000))
         }
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,2000))
       }
       backlog2= await recoveryCheckCenterPost1980()
-      await new Promise(res=> setTimeout(res,5000))
+      await new Promise(res=> setTimeout(res,2000))
       console.log(backlog2);
       if(backlog2){
         for(i=0;i<backlog2.length;i++){
@@ -1312,16 +1335,25 @@ export const deleteRecord = async (req, res) => {
 
           await new Promise(res=> setTimeout(res,1000))
         }
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,2000))
       }
-      let beginQuery=db_centerNode.query("BEGIN",async (err,result)=>{
-        if(err){
-          console.log("Error Commiting");
-        }
-        else{
-          console.log("Begun");
-        }
-      });
+      let isoQuery=db_centerNode.query(`SET TRANSACTION ISOLATION LEVEL ${isoLevel}`,async (err,result)=>{
+          if(err){
+            console.log(err);
+          }
+          else{
+            console.log("Begun1");
+          }
+        });
+        await new Promise(res=> setTimeout(res,500))
+        let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
+          if(err){
+            console.log("Error Commiting2");
+          }
+          else{
+            console.log("Begun2");
+          }
+        });
       await new Promise(res=> setTimeout(res,2000))
       let query = db_centerNode.query(sql, (err,result)=>{
         if(err){
@@ -1344,7 +1376,7 @@ export const deleteRecord = async (req, res) => {
                 else{
                   console.log("Commited");
     
-                  if(testYear<1980){
+                  if(oldYear<1980){
 
                     await deleteNodePre1980(sql);
                   }
@@ -1385,9 +1417,9 @@ const deleteNodePre1980= async (sql)=>{
     }
     else{
       console.log("Successfully Connected");
-      await new Promise(res=> setTimeout(res,4000))
+      await new Promise(res=> setTimeout(res,2000))
       backlog= await recoveryCheckPre1980Center()
-      await new Promise(res=> setTimeout(res,4000))
+      await new Promise(res=> setTimeout(res,2000))
       console.log(backlog);
       var i;
       if(backlog){
@@ -1396,10 +1428,10 @@ const deleteNodePre1980= async (sql)=>{
           await executeNodePre1980(backlog[i].sql_statement);
           await new Promise(res=> setTimeout(res,1000))
         }
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,2000))
       }
       
-      let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+      let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
         if(err){
           console.log("Error Commiting");
         }
@@ -1441,7 +1473,7 @@ const deleteNodePre1980= async (sql)=>{
   
 }
 const deleteNodePost1980= async (sql)=>{
-  console.log("11")
+
   var backlog;
   let test=db_post1980.getConnection(async (err,connection)=>{
     if(err){  
@@ -1451,9 +1483,9 @@ const deleteNodePost1980= async (sql)=>{
     }
     else{
       console.log("Successfully Connected");
-      await new Promise(res=> setTimeout(res,6000))
+      await new Promise(res=> setTimeout(res,2000))
       backlog= await recoveryCheckPost1980Center()
-      await new Promise(res=> setTimeout(res,5000))
+      await new Promise(res=> setTimeout(res,2000))
       console.log(backlog);
       var i;
       if(backlog){
@@ -1462,10 +1494,10 @@ const deleteNodePost1980= async (sql)=>{
           await executeNodePost1980(backlog[i].sql_statement);
           await new Promise(res=> setTimeout(res,1000))
         }
-        await new Promise(res=> setTimeout(res,5000))
+        await new Promise(res=> setTimeout(res,2000))
       }
       
-      let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+      let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
         if(err){
           console.log("Error Commiting");
         }
@@ -1513,7 +1545,7 @@ const deleteActionLogPost1980 =async (restore_sql) =>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_post1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_post1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -1559,7 +1591,7 @@ const deleteActionLogPre1980 =async (restore_sql) =>{
     }
     console.log("Successfully Connected");
   })
-  let beginQuery=db_pre1980.query("BEGIN",async (err,result)=>{
+  let beginQuery=db_pre1980.query("START TRANSACTION",async (err,result)=>{
     if(err){
       console.log("Error Commiting");
     }
@@ -1672,7 +1704,7 @@ export const setCommited = async (req, res) => {
 
 
   });
-  await new Promise(res=> setTimeout(res,2000))
+  await new Promise(res=> setTimeout(res,3000))
 
   console.log("Isolation Level Set to Read Commited");
 };
@@ -1845,15 +1877,16 @@ export const viewRecords = async (req, res) => {
     
     await new Promise(res=> setTimeout(res,20000))
     records.sort((a, b) => a.movie_id - b.movie_id);
-    console.log(records);
+
     res.json(records);
 };
 
 
 export const viewRecord = async (req, res) => {
+    const {isoLevel} = req.body;
     let sql = `SELECT * FROM movies WHERE movie_id = ${req.params.id}`;
     var result1;
-    let beginsql = `BEGIN`;
+    let beginsql = `START TRANSACTION`;
     let test1=db_centerNode.getConnection((err,connection)=>{
       if(err){  
         console.log(err)
@@ -1861,18 +1894,31 @@ export const viewRecord = async (req, res) => {
       }
 
     })
-    let beginquery = db_centerNode.query(beginsql, (err,result)=>{
+    let isoQuery=db_centerNode.query(`SET TRANSACTION ISOLATION LEVEL ${isoLevel}`,async (err,result)=>{
       if(err){
         console.log(err)
-        
+      }
+      else{
+    
       }
     });
+    await new Promise(res=> setTimeout(res,500))
+    let beginQuery=db_centerNode.query("START TRANSACTION",async (err,result)=>{
+      if(err){
+        console.log(err)
+      }
+      else{
+
+      }
+    });
+    await new Promise(res=> setTimeout(res,500))
     let query = db_centerNode.query(sql, (err,result)=>{
       if(err){
         console.log(err)
         
       }
       else{
+        console.log(result)
         result1=result
       }
 
@@ -1888,6 +1934,8 @@ export const viewRecord = async (req, res) => {
         
       }
     });
-    await new Promise(res=> setTimeout(res,1000))
+    
+    await new Promise(res=> setTimeout(res,2000))
+    
     res.json(result1);
 };

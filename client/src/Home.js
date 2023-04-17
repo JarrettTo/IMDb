@@ -36,6 +36,7 @@ const Home =() =>{
         actor1:"",
         actor2:"",
         oldYear:0,
+        isoLevel:"READ COMMITTED"
     });
     const myStyle = {
         padding: "20px",
@@ -51,8 +52,9 @@ const Home =() =>{
     };
     const handleSubmit3 = async (e) => {
         e.preventDefault();
+        setPostData({...postData, movie_id: Number(postData.movie_id),oldYear: Number(postData.oldYear) })
         console.log(postData);
-        await api.delete1(postData.movie_id);
+        await api.delete1(postData.movie_id, postData);
         
         
         
@@ -91,16 +93,16 @@ const Home =() =>{
         navigate('/view')
     }
     const setUncommited= async ()=>{
-        await api.setUncommited();
+        setPostData({...postData, isoLevel:"READ UNCOMMITTED"})
     }
     const setCommited= async ()=>{
-        await api.setCommited();
+        setPostData({...postData, isoLevel:"READ COMMITTED"})
     }
     const setRepeatable= async ()=>{
-        await api.setRepeatable();
+        setPostData({...postData, isoLevel:"REPEATABLE READ"})
     }
     const setSerializable= async ()=>{
-        await api.setSerializable();
+        setPostData({...postData, isoLevel:"SERIALIZABLE"})
     }
     const wow = (post)=>{
         console.log(post.movie_id)
@@ -124,7 +126,7 @@ const Home =() =>{
         <Typography>Delete</Typography>
         <form autoComplete="off" noValidate  onSubmit={handleSubmit3} >
         <TextField
-            
+            type="number"
             name="Movie ID"
             variant="outlined"
             label="Movie ID"
@@ -132,6 +134,17 @@ const Home =() =>{
             value={postData.movie_id}
             onChange={(e) => {
                 setPostData({ ...postData, movie_id: e.target.value });
+            }}
+        /> 
+        <TextField
+            type="number"
+            name="Old Year"
+            variant="outlined"
+            label="Old Year"
+            fullWidth
+            value={postData.oldYear}
+            onChange={(e) => {
+                setPostData({ ...postData, oldYear: e.target.value });
             }}
         />    
         <Button
@@ -149,7 +162,7 @@ const Home =() =>{
         <Typography>Update</Typography>
         <form autoComplete="off" noValidate  onSubmit={handleSubmit} >
         <TextField
-            
+            type="number"
             name="Movie ID"
             variant="outlined"
             label="Movie ID"

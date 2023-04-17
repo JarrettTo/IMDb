@@ -18,14 +18,14 @@ const View =() =>{
     const [postData, setPostData] = useState({
         //initializes postData to the ff values. we set "setPostData" as the setter function for the state variable "postData"
         movie_id: 2, 
-        
+        isoLevel: "READ COMMITTED"
     });
     const [truth, setTruth] = useState(false);
     const [post, setPost] = useState(null);
     useEffect(() => {
 
 
-        api.view(postData.movie_id).then(res=>{
+        api.view(postData.movie_id, postData).then(res=>{
             
             if (res) {
                 console.log(res);
@@ -46,6 +46,18 @@ const View =() =>{
         
         
     };
+    const setUncommited= async ()=>{
+        setPostData({...postData, isoLevel:"READ UNCOMMITTED"})
+    }
+    const setCommited= async ()=>{
+        setPostData({...postData, isoLevel:"READ COMMITTED"})
+    }
+    const setRepeatable= async ()=>{
+        setPostData({...postData, isoLevel:"REPEATABLE READ"})
+    }
+    const setSerializable= async ()=>{
+        setPostData({...postData, isoLevel:"SERIALIZABLE"})
+    }
     const clear = () => {
         setPostData({
             title:"",
@@ -60,6 +72,13 @@ const View =() =>{
     
     return(
         <div>
+            <div>
+                <Button onClick={setUncommited}>Read Uncommited</Button>
+                <Button onClick={setCommited}>Read Commited</Button>
+                <Button onClick={setRepeatable}>Repeatable Read</Button>
+                <Button onClick={setSerializable}>Serializable</Button>
+    
+            </div>
             <Paper className={classes.paperWithBorder}>
             <form autoComplete="off" noValidate  onSubmit={handleSubmit} >
             
